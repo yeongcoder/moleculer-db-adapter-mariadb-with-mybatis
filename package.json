@@ -16,5 +16,11 @@
   "bugs": {
     "url": "https://github.com/yeongcoder/moleculer-db-adapter-mariadb-with-mybatis/issues"
   },
-  "homepage": "https://github.com/yeongcoder/moleculer-db-adapter-mariadb-with-mybatis#readme"
+  "homepage": "https://github.com/yeongcoder/moleculer-db-adapter-mariadb-with-mybatis#readme",
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "mariadb": "^2.5.3",
+    "moleculer": "^0.14.13",
+    "mybatis-mapper": "^0.6.5"
+  }
 }
