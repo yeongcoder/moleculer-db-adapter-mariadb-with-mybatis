@@ -1,5 +1,4 @@
 /*eslint-disable */
-const _ = require("lodash");
 const { MoleculerServerError } = require("moleculer").Errors;
 const mariadb = require("mariadb");
 const mybatisMapper = require("mybatis-mapper");
@@ -7,13 +6,15 @@ const mybatisMapper = require("mybatis-mapper");
 class MariaDbAdapter {
   /**
    * Creates an instance of MariaDbAdapter.
+   * @param {string} url
    * @param {mariadb.PoolConfig} opts
    *
    * @memberof MariaDbAdapter
    */
-  constructor(opts) {
+  constructor(url, opts) {
+    this.url = url;
     this.opts = opts;
-    this.mapper = _.cloneDeep(mybatisMapper);
+    this.mapper = mybatisMapper;
   }
 
   /**
@@ -37,13 +38,14 @@ class MariaDbAdapter {
    * @memberof MariaDbAdapter
    */
   connect() {
+    const connectOption = this._getConnectOptions(this.url, this.opts);
     if (!this.service.schema.settings.mapperDir) {
       throw new MoleculerServerError(
         "Missing `mapperDir` definition in schema.settings of service!"
       );
     }
-    this.pool = mariadb.createPool(this.opts);
-    this.mapper.createMapper([this.service.schema.settings.mapperDir]);
+    this.pool = mariadb.createPool(connectOption);
+    this.mapper.createMapper(this.service.schema.settings.mapperDir);
     return this.pool.getConnection().then((conn) => {
       this.db = conn;
       this.db.sendQuery = this.sendQuery.bind(this);
@@ -74,10 +76,75 @@ class MariaDbAdapter {
    *
    * @memberof MariaDbAdapter
    */
-  sendQuery(id, params) {
-    const sql = this.mapper.getStatement("mariadb", id, params);
+  sendQuery(namespace, id, params) {
+    const sql = this.mapper.getStatement(namespace, id, params);
     this.service.logger.info(sql);
     return this.db.query(sql);
+  }
+
+  /**
+   * Send SQL Query to Database
+   *
+   * @param {string} id
+   * @param {object?} params
+   * @returns {object}
+   *
+   * @memberof MariaDbAdapter
+   */
+  _getConnectOptions(url, option) {
+    return {
+      host: this._getHostFromUrl(url),
+      database: this._getDatabaseFromUrl(url),
+      user: this._getUserFromUrl(url),
+      password: this._getPasswordFromUrl(url),
+      ...option,
+    };
+  }
+
+  /**
+   * Send SQL Query to Database
+   *
+   * @param {string} url
+   * @returns {string}
+   *
+   * @memberof MariaDbAdapter
+   */
+  _getHostFromUrl(url) {
+    return url.match(/@.*(:\d*)?(?=\/)/g)[0].replace("@", "");
+  }
+
+  /**
+   * Send SQL Query to Database
+   *
+   * @param {string} url
+   * @returns {string}
+   *
+   * @memberof MariaDbAdapter
+   */
+  _getDatabaseFromUrl(url) {
+    return url.match(/\/\w*$/g)[0].replace("/", "");
+  }
+  /**
+   * Send SQL Query to Database
+   *
+   * @param {string} url
+   * @returns {string}
+   *
+   * @memberof MariaDbAdapter
+   */
+  _getUserFromUrl(url) {
+    return url.match(/\/\w*(?=:)/g)[0].replace("/", "");
+  }
+  /**
+   * Send SQL Query to Database
+   *
+   * @param {string} url
+   * @returns {string}
+   *
+   * @memberof MariaDbAdapter
+   */
+  _getPasswordFromUrl(url) {
+    return url.match(/\:\w*(?=@)/g)[0].replace(":", "");
   }
 }
 
