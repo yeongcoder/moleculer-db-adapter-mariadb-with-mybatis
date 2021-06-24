@@ -1,5 +1,4 @@
 /*eslint-disable */
-const _ = require("lodash");
 const { MoleculerServerError } = require("moleculer").Errors;
 const mariadb = require("mariadb");
 const mybatisMapper = require("mybatis-mapper");
@@ -13,7 +12,7 @@ class MariaDbAdapter {
    */
   constructor(opts) {
     this.opts = opts;
-    this.mapper = _.cloneDeep(mybatisMapper);
+    this.mapper = mybatisMapper;
   }
 
   /**
@@ -43,7 +42,7 @@ class MariaDbAdapter {
       );
     }
     this.pool = mariadb.createPool(this.opts);
-    this.mapper.createMapper([this.service.schema.settings.mapperDir]);
+    this.mapper.createMapper(this.service.schema.settings.mapperDir);
     return this.pool.getConnection().then((conn) => {
       this.db = conn;
       this.db.sendQuery = this.sendQuery.bind(this);
@@ -68,15 +67,16 @@ class MariaDbAdapter {
   /**
    * Send SQL Query to Database
    *
+   * @param {string} namespace
    * @param {string} id
    * @param {object?} params
    * @returns {Promise}
    *
    * @memberof MariaDbAdapter
    */
-  sendQuery(id, params) {
-    const sql = this.mapper.getStatement("mariadb", id, params);
-    this.service.logger.info(sql);
+  sendQuery(namespace, id, params) {
+    const sql = this.mapper.getStatement(namespace, id, params);
+    //this.service.logger.info(sql);
     return this.db.query(sql);
   }
 }
