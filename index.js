@@ -6,11 +6,13 @@ const mybatisMapper = require("mybatis-mapper");
 class MariaDbAdapter {
   /**
    * Creates an instance of MariaDbAdapter.
+   * @param {string} url
    * @param {mariadb.PoolConfig} opts
    *
    * @memberof MariaDbAdapter
    */
-  constructor(opts) {
+  constructor(url, opts) {
+    this.url = url;
     this.opts = opts;
     this.mapper = mybatisMapper;
   }
@@ -36,12 +38,13 @@ class MariaDbAdapter {
    * @memberof MariaDbAdapter
    */
   connect() {
+    const connectOption = this._getConnectOptions(this.url, this.opts);
     if (!this.service.schema.settings.mapperDir) {
       throw new MoleculerServerError(
         "Missing `mapperDir` definition in schema.settings of service!"
       );
     }
-    this.pool = mariadb.createPool(this.opts);
+    this.pool = mariadb.createPool(connectOption);
     this.mapper.createMapper(this.service.schema.settings.mapperDir);
     return this.pool.getConnection().then((conn) => {
       this.db = conn;
@@ -67,7 +70,6 @@ class MariaDbAdapter {
   /**
    * Send SQL Query to Database
    *
-   * @param {string} namespace
    * @param {string} id
    * @param {object?} params
    * @returns {Promise}
@@ -76,8 +78,34 @@ class MariaDbAdapter {
    */
   sendQuery(namespace, id, params) {
     const sql = this.mapper.getStatement(namespace, id, params);
-    //this.service.logger.info(sql);
+    this.service.logger.info(sql);
     return this.db.query(sql);
+  }
+
+  /**
+   * Send SQL Query to Database
+   *
+   * @param {string} id
+   * @param {object?} params
+   * @returns {object}
+   *
+   * @memberof MariaDbAdapter
+   */
+  _getConnectOptions(url, option) {
+    const regexp = /^(\w+):\/\/"+(\w+)"+:"+(.+)"+@(\w+):(\d+)\/(\w+)$/g;
+    const group = regexp.exec(this.url);
+    if (7 > group) {
+      throw Error("Invalid database uri");
+    }
+    const [, , user, password, host, port, database] = group;
+    return {
+      host,
+      port,
+      database,
+      user,
+      password,
+      ...option,
+    };
   }
 }
 
