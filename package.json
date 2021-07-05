@@ -1,6 +1,6 @@
 {
   "name": "moleculer-db-adapter-mariadb-with-mybatis",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -21,6 +21,7 @@
     "lodash": "^4.17.21",
     "mariadb": "^2.5.3",
     "moleculer": "^0.14.13",
-    "mybatis-mapper": "^0.6.5"
+    "mybatis-mapper": "^0.6.5",
+    "url-parse": "^1.5.1"
   }
 }

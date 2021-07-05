@@ -1,5 +1,6 @@
 /*eslint-disable */
 const { MoleculerServerError } = require("moleculer").Errors;
+const urlParse = require("url-parse");
 const mariadb = require("mariadb");
 const mybatisMapper = require("mybatis-mapper");
 
@@ -92,59 +93,14 @@ class MariaDbAdapter {
    * @memberof MariaDbAdapter
    */
   _getConnectOptions(url, option) {
+    const parsed = urlParse(url, true);
     return {
-      host: this._getHostFromUrl(url),
-      database: this._getDatabaseFromUrl(url),
-      user: this._getUserFromUrl(url),
-      password: this._getPasswordFromUrl(url),
+      host: parsed.host,
+      database: parsed.pathname.replace("/", ""),
+      user: parsed.username,
+      password: parsed.password,
       ...option,
     };
-  }
-
-  /**
-   * Send SQL Query to Database
-   *
-   * @param {string} url
-   * @returns {string}
-   *
-   * @memberof MariaDbAdapter
-   */
-  _getHostFromUrl(url) {
-    return url.match(/@.*(:\d*)?(?=\/)/g)[0].replace("@", "");
-  }
-
-  /**
-   * Send SQL Query to Database
-   *
-   * @param {string} url
-   * @returns {string}
-   *
-   * @memberof MariaDbAdapter
-   */
-  _getDatabaseFromUrl(url) {
-    return url.match(/\/\w*$/g)[0].replace("/", "");
-  }
-  /**
-   * Send SQL Query to Database
-   *
-   * @param {string} url
-   * @returns {string}
-   *
-   * @memberof MariaDbAdapter
-   */
-  _getUserFromUrl(url) {
-    return url.match(/\/\w*(?=:)/g)[0].replace("/", "");
-  }
-  /**
-   * Send SQL Query to Database
-   *
-   * @param {string} url
-   * @returns {string}
-   *
-   * @memberof MariaDbAdapter
-   */
-  _getPasswordFromUrl(url) {
-    return url.match(/\:\w*(?=@)/g)[0].replace(":", "");
   }
 }
 
